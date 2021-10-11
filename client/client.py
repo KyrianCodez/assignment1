@@ -8,11 +8,7 @@ import os.path
 import pickle
 import json
 #USED TO VALIDATE INPUT FROM USER
-def validateInput(uInput):
-    
-    # if(any(uInput.isdigit()) == True):
-    #    return print("Numbers should not be included")
-        
+def validateInput(uInput):        
     words = uInput.split()
     words[0] = words[0].casefold()
     return words
@@ -67,16 +63,14 @@ def decision(s):
     elif(cmd == 'create'):
         print("Enter file contents: \n")
         text = input()
-        
         message['cmd'] = cmd
         message['file'] = file
         message['text'] = text
-        print( "message is ", message['text'])
         message = bytes(json.dumps(message), 'UTF-8')
         s.send(message)
         print('Awaiting server response....')
         response = s.recv(4096)
-        print("Response from server: ",response.decode())
+        print("Response from server: " , response.decode())
         print(input("Type enter to continue..."))    
     #end create
         
