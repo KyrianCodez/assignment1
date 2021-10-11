@@ -13,6 +13,12 @@ def validateFile(file):
    
 	return os.path.isfile(file)
 #Reads data from file into a string variable
+def readFromFile(file):
+    inFile = open(file, 'rb')
+    message = inFile.read()
+    message = str(message, 'UTF-8')
+    inFile.close()
+    return message	
 def writeToFile(file, message):
 	outFile = open(file, 'wb')
 	outFile.write(bytes(message, 'UTF-8'))
@@ -36,12 +42,46 @@ def handleCommand(s):
 		
 	elif(message['cmd'] == 'create'):
 		if(validateFile(message['file']) == True):
-			return print('File already exists')
+			response = 'File already exists'
+			print(response)
+			c.send(bytes(response, 'UTF-8'))
+			c.close()
+			return
 		writeToFile(message['file'], message['text'])
 		response = "File: "+ message['file'] + ' created successfully!'
 		print(response)	
 		c.send(bytes(response, 'UTF-8'))
 		c.close()
+	elif(message['cmd'] == 'search'):
+		if(validateFile(message['file']) == False):
+			response = 'File does not exists on server'
+			print(response)
+			c.send(bytes(response, 'UTF-8'))
+			c.close()
+			return
+		response = 'Enter search term: \n'
+		c.send(bytes(response, 'UTF-8'))
+		print('Awaiting response from client...')
+		c.settimeout(60.0)
+	
+		search = c.recv(4096)
+		c.settimeout(None)
+		contents = readFromFile(message['file'])
+		index = contents.find(search.decode())
+		search = search.decode()
+		if(index == -1):
+			response = search+' is not in '+message['file']
+			print(response)
+			c.send(bytes(response, 'UTF-8'))
+			c.close()
+			return
+		response = 'Term: '+search+' found in file '+message['file']+' at index '+str(index)
+	
+		print(response)
+		c.send(bytes(response, 'UTF-8'))
+		c.close()
+		return
+    			
 	
 def MainCode():
 

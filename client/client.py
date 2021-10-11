@@ -95,7 +95,9 @@ def decision(s):
         response = s.recv(4096)
         print("Response from server: " , response.decode())
         search = input()
-        s.send(bytes(search))
+        s.send(bytes(search, 'UTF-8'))
+    else:
+        print('Incorrect option. Please only choose an option that is listed')
 
         
 
