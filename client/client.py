@@ -5,6 +5,8 @@
 """
 from socket import *
 import os.path
+import pickle
+import json
 #USED TO VALIDATE INPUT FROM USER
 def validateInput(uInput):
     
@@ -12,7 +14,7 @@ def validateInput(uInput):
     #    return print("Numbers should not be included")
         
     words = uInput.split()
-    words[0].casefold()
+    words[0] = words[0].casefold()
     return words
 #Returns false if file does not exist
 def validateFile(file):
@@ -38,43 +40,70 @@ def decision(s):
     valWords = validateInput(uInput)
     cmd = valWords[0]
     file = valWords[1]
-    #checks command entered after validation checks return valid
-    
+    #declaring json object
+    message = { 
+            "cmd": '',
+            "file": '',
+            "text": '',
+        }
     #put
     if(cmd == 'put'):
         if(validateFile(file) == False):
             return print('File does not exist! Check spelling!')
-        
-        message = readFromFile(file)
-        s.send(bytes(file,'UTF-8'))
-        s.send(bytes(message, 'UTF-8'))
-        print('Sent Message to server')
+        text = readFromFile(file)
+         #using json to simplify data for sending and processing
+        message['cmd'] = cmd
+        message['file'] = file
+        message['text'] = text
+        message = bytes(json.dumps(message), 'UTF-8')
+        s.send(message)
+        print('Awaiting response...')
+        response = s.recv(4096)
+        print("Response from server: ", response.decode())
         print(input("Type any key to continue..."))
     #end put
     
     #create
     elif(cmd == 'create'):
-        # if(validateFile(file) == True):
-        #     return print('File already exists')
-        message = print(input("Enter file contents: \n"))
-        s.send(bytes(file,'UTF-8'))
-        s.send(bytes(message, 'UTF-8'))
-        print('Awaiting server response....')
-        print(input("Type any key to continue..."))
+        print("Enter file contents: \n")
+        text = input()
         
+        message['cmd'] = cmd
+        message['file'] = file
+        message['text'] = text
+        print( "message is ", message['text'])
+        message = bytes(json.dumps(message), 'UTF-8')
+        s.send(message)
+        print('Awaiting server response....')
+        response = s.recv(4096)
+        print("Response from server: ",response.decode())
+        print(input("Type enter to continue..."))    
     #end create
         
+
+    #list
+    elif(cmd == 'list'):
+        print("Sending request to server...")
+        s.send(bytes(cmd, 'UTF-8'))
+        data = srecv(1024).decode
+        print(data)
+    
+    
+
+
+        
+
         
         
     
 def MainCode():
     cmd = '0'
-    s = socket(AF_INET, SOCK_STREAM)
-    host = gethostbyname('127.0.0.1')
-    port = 20007
-    server_addr = (host, port)
-    s.connect(server_addr)
-    while(cmd != 'exit'):
+    while(cmd != 'exit'): 
+        s = socket(AF_INET, SOCK_STREAM)
+        host = gethostbyname('127.0.0.1')
+        port = 20007
+        server_addr = (host, port)
+        s.connect(server_addr)
         printMenu()
         decision(s)
     
