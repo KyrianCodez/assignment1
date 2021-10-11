@@ -5,11 +5,15 @@
 """
 from socket import *
 import os.path
-import pickle
 import json
 #USED TO VALIDATE INPUT FROM USER
-def validateInput(uInput):        
+def validateInput(uInput):  
+        
     words = uInput.split()
+    if(len(words) == 1):
+        print('uinput ',len(words))
+        return uInput  
+    
     words[0] = words[0].casefold()
     return words
 #Returns false if file does not exist
@@ -79,11 +83,19 @@ def decision(s):
     elif(cmd == 'list'):
         print("Sending request to server...")
         s.send(bytes(cmd, 'UTF-8'))
-        data = srecv(1024).decode
+        data = s.recv(1024).decode()
         print(data)
-    
-    
-
+    elif(cmd == 'search'):
+        message['cmd'] = cmd
+        message['file'] = file
+        message = bytes(json.dumps(message), 'UTF-8')
+        s.send(message)
+        print('Message sent to server...\n')
+        print('Awaiting server response....\n')
+        response = s.recv(4096)
+        print("Response from server: " , response.decode())
+        search = input()
+        s.send(bytes(search))
 
         
 
