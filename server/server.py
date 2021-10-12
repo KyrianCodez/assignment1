@@ -8,6 +8,7 @@ from os import path
 from socket import *
 import os.path
 import json
+import sys
 
 #Returns false if file does not exist
 def validateFile(file):
@@ -15,11 +16,11 @@ def validateFile(file):
 	return os.path.isfile(file)
 #Reads data from file into a string variable
 def readFromFile(file):
-    inFile = open(file, 'rb')
-    message = inFile.read()
-    message = str(message, 'UTF-8')
-    inFile.close()
-    return message	
+	inFile = open(file, 'rb')
+	message = inFile.read()
+	message = str(message, 'UTF-8')
+	inFile.close()
+	return message	
 def writeToFile(file, message):
 	outFile = open(file, 'wb')
 	outFile.write(bytes(message, 'UTF-8'))
@@ -29,8 +30,13 @@ def handleCommand(s):
 	c, addr = s.accept()
 	print('Received Connection from: ' + str(addr))
 	print('Waiting on message ... \n')
-	message = json.loads(c.recv(4096))
-	
+	message = c.recv(4096)
+	if not message:
+		print('No data recieved. Closing outstanding connection!')
+		c.close()
+		return
+	message = json.loads(message)
+
 	# message = str(message, 'UTF-8') ##Unicode Transformation Format (UTF) - HTML 5 uses this standard
 	if(message['cmd'] == 'put'):
 		print('File Received: \n' + message['file'] + '\n')
@@ -55,7 +61,7 @@ def handleCommand(s):
 		c.close()
 	elif(message['cmd'] == 'list'):
 		print('Command received.')
-		response = os.listdir(bytes(b"."))
+		response = os.listdir(".")
 		response = str(response)
 		c.send(bytes(response, 'UTF-8'))
 		print('List of files in directory sent.\n')
@@ -63,59 +69,53 @@ def handleCommand(s):
 	elif(message['cmd'] == 'show'):
 		print('Command received.')
 		if(validateFile(message['file']) == False):
-			response = 'File does not exist on server'
+			response = '404'
 			print(response)
 			c.send(bytes(response, 'UTF-8'))
+		
 			c.close()
 			return
-		content = readFromFile(message['file'])
-		print(content)
-		c.send(bytes(content, 'UTF-8'))
+		response = readFromFile(message['file'])
+		print(response)
+		c.send(bytes(response, 'UTF-8'))
 		c.close()
-		return
 			
 	elif(message['cmd'] == 'delete'):
-		print('Command received.')
 		if(validateFile(message['file']) == False):
-			response = 'File does not exists on server'
-			print(response)
+			response = '404'
+			print('File does not exist')
 			c.send(bytes(response, 'UTF-8'))
 			c.close()
 			return
-		name, extension = os.path.splitext()
-		if(extension == '.txt'):
-			response = 'File found'
-			print(response)
-			print('Deleting file...')
-			c.send(bytes(response, 'UTF-8'))
+		print('File found\nDeleting file...')
+		try:
 			os.remove(message['file'])
-			confirmation = 'File deleted'
+			confirmation = 'File '+message['file']+' has been removed successfully'
 			print(confirmation)
 			c.send(bytes(confirmation, 'UTF-8'))
 			c.close()
 			return
-		response = 'File type incorrect'
-		print(response)
-		c.send(bytes(response, 'UTF-8'))
-		c.close()
-		return
+		except OSError as e:
+			print(e)
+			error = bytes(e,'UTF-8')
+			c.send(error)
+			c.close()
+			return
 		
 	elif(message['cmd'] == 'wordcount'):
-		print('Command received.')
+	
 		if(validateFile(message['file']) == False):
-			response = 'File does not exist on server'
+			response = '404'
 			print(response)
 			c.send(bytes(response, 'UTF-8'))
 			c.close()
 			return
-		name = message['file']
 		print(message['file'])
-		print(name)
 		content = readFromFile(message['file'])
 		words = len(content.split())
-		wordstring = str(words)
-		print('Wordcount: '+wordstring)
-		c.send(bytes(wordstring, 'UTF-8'))
+		words = str(words)
+		print('Wordcount: ', words)
+		c.send(bytes(words, 'UTF-8'))
 		c.close()
 		return
 
@@ -133,10 +133,11 @@ def handleCommand(s):
 		c.settimeout(60.0)
 	
 		search = c.recv(4096)
+		search = search.decode()
 		c.settimeout(None)
 		contents = readFromFile(message['file'])
-		index = contents.find(search.decode())
-		search = search.decode()
+		index = contents.find(search)
+		
 		if(index == -1):
 			response = search+' is not in '+message['file']
 			print(response)
@@ -149,10 +150,15 @@ def handleCommand(s):
 		c.send(bytes(response, 'UTF-8'))
 		c.close()
 		return
+	elif(message['cmd']=='exit'):
 	
+		response = "I'm sorry Dave I can't let you do that.(2001 space oddessey) Just kidding Shutting down."
+		c.send(bytes(response, 'UTF-8'))
+		sys.exit(response)
 		
-    		
-    			
+		
+			
+				
 	
 def MainCode():
 
