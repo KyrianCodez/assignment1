@@ -8,6 +8,7 @@ from os import path
 from socket import *
 import os.path
 import json
+
 #Returns false if file does not exist
 def validateFile(file):
    
@@ -52,6 +53,73 @@ def handleCommand(s):
 		print(response)	
 		c.send(bytes(response, 'UTF-8'))
 		c.close()
+	elif(message['cmd'] == 'list'):
+		print('Command received.')
+		response = os.listdir(bytes(b"."))
+		response = str(response)
+		c.send(bytes(response, 'UTF-8'))
+		print('List of files in directory sent.\n')
+		c.close()
+	elif(message['cmd'] == 'show'):
+		print('Command received.')
+		if(validateFile(message['file']) == False):
+			response = 'File does not exist on server'
+			print(response)
+			c.send(bytes(response, 'UTF-8'))
+			c.close()
+			return
+		content = readFromFile(message['file'])
+		print(content)
+		c.send(bytes(content, 'UTF-8'))
+		c.close()
+		return
+			
+	elif(message['cmd'] == 'delete'):
+		print('Command received.')
+		if(validateFile(message['file']) == False):
+			response = 'File does not exists on server'
+			print(response)
+			c.send(bytes(response, 'UTF-8'))
+			c.close()
+			return
+		name, extension = os.path.splitext()
+		if(extension == '.txt'):
+			response = 'File found'
+			print(response)
+			print('Deleting file...')
+			c.send(bytes(response, 'UTF-8'))
+			os.remove(message['file'])
+			confirmation = 'File deleted'
+			print(confirmation)
+			c.send(bytes(confirmation, 'UTF-8'))
+			c.close()
+			return
+		response = 'File type incorrect'
+		print(response)
+		c.send(bytes(response, 'UTF-8'))
+		c.close()
+		return
+		
+	elif(message['cmd'] == 'wordcount'):
+		print('Command received.')
+		if(validateFile(message['file']) == False):
+			response = 'File does not exist on server'
+			print(response)
+			c.send(bytes(response, 'UTF-8'))
+			c.close()
+			return
+		name = message['file']
+		print(message['file'])
+		print(name)
+		content = readFromFile(message['file'])
+		words = len(content.split())
+		wordstring = str(words)
+		print('Wordcount: '+wordstring)
+		c.send(bytes(wordstring, 'UTF-8'))
+		c.close()
+		return
+
+
 	elif(message['cmd'] == 'search'):
 		if(validateFile(message['file']) == False):
 			response = 'File does not exists on server'
@@ -81,6 +149,9 @@ def handleCommand(s):
 		c.send(bytes(response, 'UTF-8'))
 		c.close()
 		return
+	
+		
+    		
     			
 	
 def MainCode():

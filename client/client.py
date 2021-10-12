@@ -81,10 +81,57 @@ def decision(s):
 
     #list
     elif(cmd == 'list'):
-        print("Sending request to server...")
-        s.send(bytes(cmd, 'UTF-8'))
-        data = s.recv(1024).decode()
-        print(data)
+        message['cmd'] = cmd
+        message['file'] = file
+        print('Sending request to server...')
+        s.send(bytes(json.dumps(message), 'UTF-8'))
+        print('Awaiting server response')
+        response = s.recv(4096).decode()
+        print('List of files in directory: \n'+ response)
+    #endlist
+    #show
+    elif(cmd == 'show'):
+        message['cmd'] == cmd
+        message['file'] == file 
+        print('Sending request to server...')
+        s.send(bytes(json.dumps(message), 'UTF-8'))
+        response = s.recv(4096).decode()
+        if(response == 'File does not exist on server'):
+            print('File not found.')
+        print('File found.')
+        content = s.recv(4096).decode()
+        print('File contents: ')
+        print(content)
+    #delete
+    elif(cmd == 'delete'):
+        message['cmd'] == cmd
+        message['file'] == file
+        print('Sending server request...')
+        #s.send(bytes(json.dumps(message), 'UTF-8'))
+        message = bytes(json.dumps(message), 'UTF-8')
+        s.send(message)
+        response = s.recv(4096).decode()
+        if(response == 'File does not exist on server'):
+            print(response)
+        elif(response == 'File found'):
+            confirm = s.recv(4096).decode()
+            print(confirm)
+        elif(response == 'File type incorrect'):
+            print(response)
+    #wordcount
+    elif(cmd == 'wordcount'):
+        message['cmd'] = cmd
+        message['file'] == file
+        print('Sending server request...')
+        message = bytes(json.dumps(message), 'UTF-8')
+        s.send(message)
+        response = s.recv(4096).decode()
+        if(response == 'File does not exist on server'):
+            print(response)
+        elif():
+            print('File: '+file)
+            print('Wordcount: '+response)
+
     elif(cmd == 'search'):
         message['cmd'] = cmd
         message['file'] = file
